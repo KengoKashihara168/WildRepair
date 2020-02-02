@@ -11,6 +11,7 @@ public class PlayerMove : MonoBehaviour
     private int timer;
     private bool countFrag;
     private AudioSource audio;
+    private Transform obstaclePosition;
 
     void Start()
     {
@@ -19,6 +20,8 @@ public class PlayerMove : MonoBehaviour
         countFrag = false;
 
         audio = GetComponent<AudioSource>();
+
+        obstaclePosition = null;
     }
 
     // Update is called once per frame
@@ -42,18 +45,12 @@ public class PlayerMove : MonoBehaviour
             timer++;
         }
 
-        if (timer >= 15)
+        if (timer >= 10)
         {
             // 通過
             Through();
-        }
-
-        if (timer >= 60)
-        {
-            countFrag = false;
-            rigid.bodyType = RigidbodyType2D.Dynamic;
-            timer = 0;
-        }
+            ResetThrough();
+        } 
     }
 
     /// <summary>
@@ -79,8 +76,29 @@ public class PlayerMove : MonoBehaviour
         rigid.bodyType = RigidbodyType2D.Kinematic;
     }
 
+    /// <summary>
+    /// 透過の初期化
+    /// </summary>
+    private void ResetThrough()
+    {
+        if (rigid.bodyType != RigidbodyType2D.Kinematic) return;
+        if (obstaclePosition == null) return;
+
+        // 衝突したオブジェクトとの距離を計算
+        float distance = obstaclePosition.position.y - transform.position.y;
+        if (distance <= -1.5f)
+        {
+            // 透過をリセット
+            countFrag = false;
+            rigid.bodyType = RigidbodyType2D.Dynamic;
+            timer = 0;
+            obstaclePosition = null;
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        obstaclePosition = collision.transform;
         countFrag = true;
         audio.Play();
     }
